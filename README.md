@@ -22,13 +22,14 @@ Following a very simple setup to explain the basics behind this module, one for 
 
 ```js
 import BidiSSE from 'bidi-sse/client';
+// or import BidiSSE from 'https://unpkg.com/bidi-sse';
 
 const bidi = new BidiSSE('/bidi-path');
 
 // use it like a socket
 bidi.on('open', () => {
   console.log('open');
-  // send data once connected at any time
+  // it can send data once connected
   bidi.send({some: 'data'});
 });
 
@@ -42,10 +43,11 @@ bidi.on('close', () => console.log('closed'));
 ```js
 const express = require('express');
 const BidiSSE = require('bidi-sse/server');
+// or import BidiSSE from 'https://unpkg.com/bidi-sse/esm/server.js';
 
 const bidi = new BidiSSE('/bidi-path');
 
-// use the handler
+// use it as handler or check bidi.handler(req, res) directly
 const app = express();
 app.use(bidi.handler);
 app.use(express.static(__dirname));
@@ -69,23 +71,44 @@ bidi.on('connection', client => {
 });
 ```
 
-### API
+## API
 
 Both *client* and *server* constructors accept a `path` to enable as *bidi-sse*, and an optional `options` object.
 
-**client**
+#### Client
 ```js
 const bidi = new BidiSSE('/some-path', {
   // optional fetch options to merge per each send
-  // using credentials 'omit' set credentials for EventSource on
+  // using credentials 'omit' set withCredentials
+  // for EventSource as `false`: it's `true` by default.
   fetch: {credentials: 'omit'},
 
   // default JSON serializer to send/receive data
   JSON
 });
+
+// readyState is one of the static BidiSSE values:
+bidi.readyState;
+// BidiSSE.CONNECTING ➡ open event not fired yet: cannot send
+// BidiSSE.OPEN       ➡ open fired: can now send
+// BidiSSE.CLOSING    ➡ connection error occurred
+// BidiSSE.CLOSED     ➡ bidi.close(); or after connection error
+
+// events + chainable .on(type, fn) method
+bidi.on('open', () => console.info('open'));
+bidi.on('message', console.log);
+bidi.on('error', console.error);
+bidi.on('close', () => console.info('close'));
+
+// methods: send throws if readyState is not OPEN
+bidi.send({any: 'data'});
+bidi.close();
+
+// extra
+bidi.emit('type', ...[{any: 'data'}]);
 ```
 
-**server**
+#### Server
 ```js
 const bidi = new BidiSSE('/some-path', {
   // if its value is `"cors"` it enables CORS via headers
@@ -98,6 +121,25 @@ const bidi = new BidiSSE('/some-path', {
   // default JSON serializer to send/receive data
   JSON
 });
+
+// a read only array of clients, where each client has
+// the same properties and methods of the rel client side one
+bidi.clients;
+
+// an auto-bound method usable as express handler or within
+// basic nodejs createServer logic. Returns true if the request
+// was handled as Server-sent Event.
+bidi.handler;
+
+// events + chainable .on(type, fn) method
+bidi.on('connection', client => {
+  // client is unique per visitor and it has all features
+  // a client-side bidi instance has
+});
+bidi.on('close', () => { console.log('all gone'); });
+
+// methods: close throw away all connected clients, then resolves
+bidi.close();
 ```
 
 Please note that the **JSON** library must be the same for both *client* and *server*. [flatted](https://www.npmjs.com/package/flatted) or [@ungap/structured-clone/json](https://github.com/ungap/structured-clone#tojson) are just two possible parsers able to deal with recursion and, in the structured clone case, more data kinds than JSON.
