@@ -2,8 +2,17 @@
 
 <sup>**Social Media Photo by [Ian Taylor](https://unsplash.com/@carrier_lost) on [Unsplash](https://unsplash.com/)**</sup>
 
-
 Bidirectional [Server-sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
+
+## Use cases
+
+It is extremely important to understand **where** this module *can easily fail, as opposite of being a solution* ...
+
+  * this module assumes *every request passes through the same process*, meaning that *cluster*, *serverless*, *load balance*, or "*you name it*", might easily fail if the browser client `EventSource` points at one end of the spectrum, but any of the further *UUIDs related* request are known in a possibly different stack, not the one that enabled the first request
+
+  * **serverless** solutions **are not** a **good** scenario *so far* for this solution ... serverless is **not** a good solution for anything that uses *websockets*, "forever pending *sse requests*", and so on ....
+
+  * this module was mostly born to satisfy [proxied-node](https://github.com/WebReflection/proxied-node#readme) constrains and architecrture, among IoT caveats, so please **don't use this in production unless you are really understaning what you are doing 👍**
 
 
 ### About
@@ -70,6 +79,7 @@ bidi.on('connection', client => {
   });
 });
 ```
+
 
 ## API
 
@@ -141,5 +151,7 @@ bidi.on('close', () => { console.log('all gone'); });
 // methods: close throw away all connected clients, then resolves
 bidi.close();
 ```
+
+#### About JSON
 
 Please note that the **JSON** library must be the same for both *client* and *server*. [flatted](https://www.npmjs.com/package/flatted) or [@ungap/structured-clone/json](https://github.com/ungap/structured-clone#tojson) are just two possible parsers able to deal with recursion and, in the structured clone case, more data kinds than JSON.
