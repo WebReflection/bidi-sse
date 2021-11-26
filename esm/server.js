@@ -1,14 +1,16 @@
 /*! (c) Andrea Giammarchi - ISC */
 
 import {EventEmitter} from 'events';
-import {OPEN, CLOSED} from './constants.js';
+import {Class, OPEN, CLOSED} from './constants.js';
 
 const {random} = Math;
 
-class Client extends EventEmitter {
+class Client extends Class(EventEmitter) {
+  /**
+   * @private
+   */
   constructor(_, send) {
     super();
-
     this._ = _;
     this.readyState = OPEN;
 
@@ -75,10 +77,10 @@ export default class Server extends EventEmitter {
   async close() {
     const closed = [];
     const {clients} = this._;
-    const once = (emitter, type) => new Promise($ => emitter.once(type, $));
+    const once = ({_}) => new Promise($ => _.once('close', $));
     for (const client of clients.values()) {
       if (client.readyState === OPEN) {
-        closed.push(once(client._, 'close'));
+        closed.push(once(client));
         client.close();
       }
     }
@@ -112,12 +114,16 @@ function handler(req, res, next) {
             });
             req.on('end', () => {
               if (!clients.has(uid)) return;
-              const client = clients.get(uid);
-              try { client.emit('message', parse(chunks.join(''))); }
+              let data;
+              try { data = parse(chunks.join('')); }
               catch ({message}) {
                 const error = stringify(message);
-                client._.write(`event: unexpected\ndata: ${error}\n\n`);
+                clients.get(uid)._.write(
+                  `event: unexpected\ndata: ${error}\n\n`
+                );
+                return;
               }
+              clients.get(uid).emit('message', data);
             });
             res.writeHead(200, headers).end();
             return true;
@@ -138,19 +144,22 @@ function handler(req, res, next) {
         catch (err) { client.emit('error', err); }
       });
       clients.set(uid, client);
-      res.once(
-        'close',
-        () => {
-          clients.delete(uid);
-          client.close();
-        }
-      ).writeHead(200, {
-        ...headers,
-        'connection': 'keep-alive',
-        'cache-control': 'no-cache',
-        'content-type': 'text/event-stream'
-      });
-      res.write(`event: id\ndata: ${stringify(uid)}\n\n`);
+      res
+        .once(
+          'close',
+          () => {
+            clients.delete(uid);
+            client.close();
+          }
+        )
+        .writeHead(200, {
+          ...headers,
+          'connection': 'keep-alive',
+          'cache-control': 'no-cache',
+          'content-type': 'text/event-stream'
+        })
+        .write(`event: id\ndata: ${stringify(uid)}\n\n`)
+      ;
       this.emit('connection', client);
       return true;
     }

@@ -1,7 +1,7 @@
 /*! (c) Andrea Giammarchi - ISC */
 
-import {CONNECTING, OPEN, CLOSING, CLOSED} from './constants.js';
 import SimpleEmitter from './simple-emitter.js';
+import {Class, CONNECTING, OPEN, CLOSING, CLOSED} from './constants.js';
 
 const privates = new WeakMap;
 const fetchText = body => body.text();
@@ -12,12 +12,7 @@ const fetchText = body => body.text();
  * @property {JSON} JSON - the JSON namespace to use to `parse` and `stringify`
  */
 
-export default class Client extends SimpleEmitter {
-  static get CONNECTING() { return CONNECTING; }
-  static get OPEN() { return OPEN; }
-  static get CLOSING() { return CLOSING; }
-  static get CLOSED() { return CLOSED; }
-
+export default class extends Class(SimpleEmitter) {
   /**
    * @type {CONNECTING | OPEN | CLOSING | CLOSED}
    */

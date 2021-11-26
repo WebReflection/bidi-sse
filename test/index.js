@@ -12,6 +12,7 @@ bidi.on('connection', client => {
     console.log('client', data);
     client.send(data);
   });
+  // setTimeout(() => { bidi.close(); }, 3000);
 });
 bidi.on('close', () => {
   const {clients} = bidi;

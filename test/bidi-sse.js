@@ -1,8 +1,3 @@
-const CONNECTING = 0;
-const OPEN = 1;
-const CLOSING = 2;
-const CLOSED = 3;
-
 /*! (c) Andrea Giammarchi - ISC */
 
 const listeners = new WeakMap;
@@ -54,6 +49,18 @@ class SimpleEmitter {
   //*/
 }
 
+const CONNECTING = 0;
+const OPEN = 1;
+const CLOSING = 2;
+const CLOSED = 3;
+
+const Class = Emitter => (class extends Emitter {
+  static get CONNECTING() { return CONNECTING; }
+  static get OPEN() { return OPEN; }
+  static get CLOSING() { return CLOSING; }
+  static get CLOSED() { return CLOSED; }
+});
+
 /*! (c) Andrea Giammarchi - ISC */
 
 const privates = new WeakMap;
@@ -65,12 +72,7 @@ const fetchText = body => body.text();
  * @property {JSON} JSON - the JSON namespace to use to `parse` and `stringify`
  */
 
-class Client extends SimpleEmitter {
-  static get CONNECTING() { return CONNECTING; }
-  static get OPEN() { return OPEN; }
-  static get CLOSING() { return CLOSING; }
-  static get CLOSED() { return CLOSED; }
-
+class client extends Class(SimpleEmitter) {
   /**
    * @type {CONNECTING | OPEN | CLOSING | CLOSED}
    */
@@ -153,4 +155,4 @@ class Client extends SimpleEmitter {
   }
 }
 
-export { Client as default };
+export { client as default };

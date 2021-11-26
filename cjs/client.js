@@ -1,8 +1,8 @@
 'use strict';
 /*! (c) Andrea Giammarchi - ISC */
 
-const {CONNECTING, OPEN, CLOSING, CLOSED} = require('./constants.js');
 const SimpleEmitter = (m => /* c8 ignore start */ m.__esModule ? m.default : m /* c8 ignore stop */)(require('./simple-emitter.js'));
+const {Class, CONNECTING, OPEN, CLOSING, CLOSED} = require('./constants.js');
 
 const privates = new WeakMap;
 const fetchText = body => body.text();
@@ -13,12 +13,7 @@ const fetchText = body => body.text();
  * @property {JSON} JSON - the JSON namespace to use to `parse` and `stringify`
  */
 
-module.exports = class Client extends SimpleEmitter {
-  static get CONNECTING() { return CONNECTING; }
-  static get OPEN() { return OPEN; }
-  static get CLOSING() { return CLOSING; }
-  static get CLOSED() { return CLOSED; }
-
+module.exports = class extends Class(SimpleEmitter) {
   /**
    * @type {CONNECTING | OPEN | CLOSING | CLOSED}
    */
