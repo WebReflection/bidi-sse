@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>bi-directional-sse</title>
+  <script type="module">
+  import BidiSSE from './bidi-sse.js';
+  const bidi = new BidiSSE('/bidi-sse');
+
+  bidi.on('open', () => {
+    console.log('open');
+    bidi.send({some: 'data'});
+  });
+
+  bidi.on('message', console.log);
+  bidi.on('error', console.error);
+  bidi.on('close', () => console.log('closed'));
+
+  const button = document.body.appendChild(document.createElement('button'));
+  button.textContent = '🛑';
+  button.onclick = () => {
+    button.disabled = true;
+    bidi.close();
+  };
+  </script>
+</head>
+<body></body>
+</html>

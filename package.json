@@ -1,0 +1,49 @@
+{
+  "name": "bidi-sse",
+  "version": "0.0.0",
+  "description": "Bidirectional Server-sent Events",
+  "main": "./cjs/index.js",
+  "scripts": {
+    "build": "npm run cjs && npm run rollup:es && npm run rollup:index && npm run test",
+    "cjs": "ascjs --no-default esm cjs",
+    "rollup:es": "rollup --config rollup/es.config.js",
+    "rollup:index": "rollup --config rollup/index.config.js",
+    "test": "node test/index.js"
+  },
+  "keywords": [
+    "sse",
+    "bidirectional",
+    "server",
+    "side",
+    "events",
+    "sockets"
+  ],
+  "author": "Andrea Giammarchi",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^13.0.6",
+    "ascjs": "^5.0.1",
+    "express": "^4.17.1",
+    "mime-types": "^2.1.34",
+    "rollup": "^2.60.1",
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "module": "./esm/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./esm/index.js",
+      "default": "./cjs/index.js"
+    },
+    "./client": {
+      "import": "./esm/client.js",
+      "default": "./cjs/client.js"
+    },
+    "./server": {
+      "import": "./esm/server.js",
+      "default": "./cjs/server.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "unpkg": "es.js"
+}
