@@ -1,7 +1,7 @@
 # bidi-sse
 
 <sup>**Social Media Photo by [Ian Taylor](https://unsplash.com/@carrier_lost) on [Unsplash](https://unsplash.com/)**</sup>
-  
+
 
 Bidirectional [Server-sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
 
@@ -57,7 +57,7 @@ app.listen(8080);
 bidi.on('connection', client => {
 
   // all clients via .clients for broadcast
-  console.log('clients', bidi.clients.length);
+  console.log('clients', bidi.clients.size);
 
   // setup clients also like sockets
   client.on('message', data => {
@@ -122,13 +122,13 @@ const bidi = new BidiSSE('/some-path', {
   JSON
 });
 
-// a read only array of clients, where each client has
-// the same properties and methods of the rel client side one
+// a read only *Set* of clients, where each client has
+// the same properties and methods of the client side one
 bidi.clients;
 
 // an auto-bound method usable as express handler or within
 // basic nodejs createServer logic. Returns true if the request
-// was handled as Server-sent Event.
+// was handled as Server-sent Event
 bidi.handler;
 
 // events + chainable .on(type, fn) method
