@@ -31,8 +31,9 @@ class Client extends EventEmitter {
 
 /**
  * @typedef {Object} ServerOptions - additional options for SSE
- * @property {object} headers - extra headers to inject on demand
- * @property {JSON} JSON - the JSON namespace to use to `parse` and `stringify`
+ * @property {string=} mode - if its value is `cors` it simplifies CORS mode
+ * @property {object=} headers - extra headers to inject on demand
+ * @property {JSON=} JSON - the JSON namespace to use to `parse` and `stringify`
  */
 
 module.exports = class Server extends EventEmitter {

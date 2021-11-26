@@ -33,8 +33,10 @@ module.exports = class Client extends SimpleEmitter {
    */
   constructor(url, options = {}) {
     super();
-    const es = new EventSource(url);
     const fetch = options.fetch || {};
+    const es = new EventSource(url, {
+      withCredentials: fetch.credentials !== 'omit'
+    });
     const {parse, stringify} = options.JSON || JSON;
     const _ = {
       es,

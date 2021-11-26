@@ -8,7 +8,8 @@
     "cjs": "ascjs --no-default esm cjs",
     "rollup:es": "rollup --config rollup/es.config.js",
     "rollup:index": "rollup --config rollup/index.config.js",
-    "test": "node test/index.js"
+    "test": "node test/index.js",
+    "size": "cat es.js | brotli | wc -c"
   },
   "keywords": [
     "sse",
