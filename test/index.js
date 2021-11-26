@@ -7,16 +7,30 @@ const {Server} = require('../cjs');
 
 const bidi = new Server('/bidi-sse', {mode: 'cors'});
 bidi.on('connection', client => {
-  console.log('clients', bidi.clients.length);
+  const {clients} = bidi;
+  const message = `There are ${clients.size} clients connected`;
+  console.log(message);
+
   client.on('message', data => {
-    console.log('client', data);
-    client.send(data);
+    console.log('client data', data);
+    client.send({message});
   });
+
+  client.on('close', () => {
+    console.log('client gone');
+    for (const client of clients)
+      client.send({message: 'a client just left'});
+  });
+
+  for (const other of clients) {
+    if (other !== client)
+      other.send({message});
+  }
   // setTimeout(() => { bidi.close(); }, 3000);
 });
-bidi.on('close', () => {
-  const {clients} = bidi;
-  console.log('clients', clients.length);
+
+bidi.on('close', function () {
+  console.log('clients', this.clients.size);
 });
 
 createServer((req, res) => {

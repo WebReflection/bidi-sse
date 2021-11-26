@@ -1,9 +1,9 @@
 /*! (c) Andrea Giammarchi - ISC */
 
+import {randomUUID} from 'crypto';
 import {EventEmitter} from 'events';
 import {Class, OPEN, CLOSED} from './constants.js';
-
-const {random} = Math;
+import SetValues from './set-values.js';
 
 class Client extends Class(EventEmitter) {
   /**
@@ -46,30 +46,22 @@ export default class Server extends EventEmitter {
    */
   constructor(path, options = {}) {
     super();
-
+    const clients = new Map;
+    const values = new SetValues(clients);
     const {parse, stringify} = options.JSON || JSON;
     const headers = options.headers || {};
     if (options.mode === 'cors')
       headers['access-control-allow-origin'] = '*';
 
     this.handler = handler.bind(this);
-    this._ = {
-      path,
-      headers,
-      parse,
-      stringify,
-      id: 0,
-      clients: new Map,
-    };
+    this._ = {path, headers, parse, stringify, clients, values};
   }
 
 
   /**
-   * @type {Client[]} all connected clients
+   * @type {Set<Client>} all connected clients
    */
-  get clients() {
-    return [...this._.clients.values()];
-  }
+  get clients() { return this._.values; }
 
   /**
    * Close all connected clients and emit the `close` event.
@@ -105,26 +97,26 @@ function handler(req, res, next) {
       const i = url.indexOf('?');
       if (-1 < i) {
         const searchParams = new URLSearchParams(url.slice(i));
-        if (searchParams.has('id')) {
-          const uid = searchParams.get('id');
+        if (searchParams.has('bidi-sse')) {
+          const uid = searchParams.get('bidi-sse');
           if (clients.has(uid)) {
-            const chunks = [];
-            req.on('data', data => {
-              chunks.push(data);
-            });
-            req.on('end', () => {
-              if (!clients.has(uid)) return;
-              let data;
-              try { data = parse(chunks.join('')); }
-              catch ({message}) {
-                const error = stringify(message);
-                clients.get(uid)._.write(
-                  `event: unexpected\ndata: ${error}\n\n`
-                );
-                return;
-              }
-              clients.get(uid).emit('message', data);
-            });
+            let data = '';
+            req
+              .on('data', chunk => { data += chunk; })
+              .on('end', () => {
+                if (!clients.has(uid)) return;
+                let parsed;
+                try { parsed = parse(data); }
+                catch ({message}) {
+                  const error = stringify(message);
+                  clients.get(uid)._.write(
+                    `event: unexpected\ndata: ${error}\n\n`
+                  );
+                  return;
+                }
+                clients.get(uid).emit('message', parsed);
+              })
+            ;
             res.writeHead(200, headers).end();
             return true;
           }
@@ -137,7 +129,7 @@ function handler(req, res, next) {
       req.headers.accept === 'text/event-stream'
     ) {
       let uid = ''; // what are the odds
-      do { uid = (++this._.id+random()).toString(36); }
+      do { uid = randomUUID({disableEntropyCache: true}); }
       while (clients.has(uid));
       const client = new Client(res, data => {
         try { res.write(`data: ${stringify(data)}\n\n`); }
@@ -158,7 +150,7 @@ function handler(req, res, next) {
           'cache-control': 'no-cache',
           'content-type': 'text/event-stream'
         })
-        .write(`event: id\ndata: ${stringify(uid)}\n\n`)
+        .write(`event: bidi-sse\ndata: ${stringify(uid)}\n\n`)
       ;
       this.emit('connection', client);
       return true;

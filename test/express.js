@@ -13,7 +13,7 @@ app.listen(8080);
 bidi.on('connection', client => {
 
   // all clients via .clients for broadcast
-  console.log('clients', bidi.clients.length);
+  console.log('clients', bidi.clients.size);
 
   // setup clients also like sockets
   client.on('message', data => {

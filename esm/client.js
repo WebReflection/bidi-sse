@@ -14,13 +14,6 @@ const fetchText = body => body.text();
 
 export default class extends Class(SimpleEmitter) {
   /**
-   * @type {CONNECTING | OPEN | CLOSING | CLOSED}
-   */
-  get readyState() {
-    return privates.get(this).readyState;
-  }
-
-  /**
    * Create an `EventSource` like transport with the ability to send data too.
    * @param {string} url the end point enabled as bidi-sse server
    * @param {ClientOptions=} options extra options to use
@@ -32,21 +25,14 @@ export default class extends Class(SimpleEmitter) {
       withCredentials: fetch.credentials !== 'omit'
     });
     const {parse, stringify} = options.JSON || JSON;
-    const _ = {
-      es,
-      parse,
-      stringify,
-      options: fetch,
-      href: '',
-      readyState: CONNECTING
-    };
+    const _ = {es, stringify, href: '', options: fetch, state: CONNECTING};
 
-    es.addEventListener('id', ({data}) => {
+    es.addEventListener('bidi-sse', ({data}) => {
       const id = parse(data);
       const location = new URL(es.url);
-      location.searchParams.append('id', id);
+      location.searchParams.append('bidi-sse', id);
       _.href = location.href;
-      _.readyState = OPEN;
+      _.state = OPEN;
       this.emit('open');
     }, {once: true});
 
@@ -59,13 +45,13 @@ export default class extends Class(SimpleEmitter) {
     });
 
     es.addEventListener('error', () => {
-      _.readyState = CLOSING;
+      _.state = CLOSING;
       this.emit('error', new Error('Connection lost ➡ ' + url));
       this.close();
     }, {once: true});
 
     es.addEventListener('close', () => {
-      _.readyState = CLOSED;
+      _.state = CLOSED;
       es.close();
       this.emit('close');
     }, {once: true});
@@ -74,13 +60,19 @@ export default class extends Class(SimpleEmitter) {
   }
 
   /**
+   * @type {CONNECTING | OPEN | CLOSING | CLOSED}
+   */
+  get readyState() {
+    return privates.get(this).state;
+  }
+
+  /**
    * Send data to the server side bidi-sse enabled end point.
    * @param {any} data serializable data to send
    */
   send(data) {
-    const {href, options, readyState, stringify} = privates.get(this);
-
-    if (readyState !== OPEN)
+    const {stringify, href, options, state} = privates.get(this);
+    if (state !== OPEN)
       throw new Error('invalid state');
 
     const body = stringify(data);
