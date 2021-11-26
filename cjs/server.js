@@ -101,21 +101,20 @@ function handler(req, res, next) {
         if (searchParams.has('bidi-sse')) {
           const uid = searchParams.get('bidi-sse');
           if (clients.has(uid)) {
-            let data = '';
+            const chunks = [];
             req
-              .on('data', chunk => { data += chunk; })
+              .on('data', chunk => { chunks.push(chunk); })
               .on('end', () => {
                 if (!clients.has(uid)) return;
-                let parsed;
-                try { parsed = parse(data); }
+                const client = clients.get(uid);
+                let data;
+                try { data = parse(chunks.join('')); }
                 catch ({message}) {
                   const error = stringify(message);
-                  clients.get(uid)._.write(
-                    `event: unexpected\ndata: ${error}\n\n`
-                  );
+                  client._.write(`event: unexpected\ndata: ${error}\n\n`);
                   return;
                 }
-                clients.get(uid).emit('message', parsed);
+                client.emit('message', data);
               })
             ;
             res.writeHead(200, headers).end();
@@ -132,10 +131,12 @@ function handler(req, res, next) {
       let uid = ''; // what are the odds
       do { uid = randomUUID({disableEntropyCache: true}); }
       while (clients.has(uid));
+
       const client = new Client(res, data => {
         try { res.write(`data: ${stringify(data)}\n\n`); }
         catch (err) { client.emit('error', err); }
       });
+
       clients.set(uid, client);
       res
         .once(

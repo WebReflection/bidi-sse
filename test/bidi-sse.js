@@ -80,10 +80,10 @@ class client extends Class(SimpleEmitter) {
    */
   constructor(url, options = {}) {
     super();
+    const once = {once: true};
     const fetch = options.fetch || {};
-    const es = new EventSource(url, {
-      withCredentials: fetch.credentials !== 'omit'
-    });
+    const withCredentials = fetch.credentials !== 'omit';
+    const es = new EventSource(url, {withCredentials});
     const {parse, stringify} = options.JSON || JSON;
     const _ = {es, stringify, href: '', options: fetch, state: CONNECTING};
 
@@ -94,7 +94,7 @@ class client extends Class(SimpleEmitter) {
       _.href = location.href;
       _.state = OPEN;
       this.emit('open');
-    }, {once: true});
+    }, once);
 
     es.addEventListener('unexpected', ({data}) => {
       this.emit('error', new Error('Unexpected ➡ ' + parse(data)));
@@ -108,13 +108,13 @@ class client extends Class(SimpleEmitter) {
       _.state = CLOSING;
       this.emit('error', new Error('Connection lost ➡ ' + url));
       this.close();
-    }, {once: true});
+    }, once);
 
     es.addEventListener('close', () => {
       _.state = CLOSED;
       es.close();
       this.emit('close');
-    }, {once: true});
+    }, once);
 
     privates.set(this, _);
   }
@@ -122,9 +122,7 @@ class client extends Class(SimpleEmitter) {
   /**
    * @type {CONNECTING | OPEN | CLOSING | CLOSED}
    */
-  get readyState() {
-    return privates.get(this).state;
-  }
+  get readyState() { return privates.get(this).state; }
 
   /**
    * Send data to the server side bidi-sse enabled end point.
