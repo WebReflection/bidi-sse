@@ -24,16 +24,16 @@ export default class SimpleEmitter {
     // unnecessary return true or false logic
   }
 
-  /* unnecessary extras
-  // const once = new WeakMap;
+  /* unnecessary extras ?
+  const once = new WeakMap;
   once(type, listener) {
     if (!once.has(listener)) {
       once.set(listener, function _() {
-        listeners.get(this).get(type).delete(_);
+        this.removeListener(type, _);
         listener.apply(this, arguments);
       });
     }
-    this.on(type, once.get(listener));
+    return this.on(type, once.get(listener));
   }
 
   removeListener(type, listener) {
