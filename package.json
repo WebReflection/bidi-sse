@@ -1,6 +1,6 @@
 {
   "name": "bidi-sse",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Bidirectional Server-sent Events",
   "main": "./cjs/index.js",
   "scripts": {
