@@ -4,16 +4,6 @@
 
 Bidirectional [Server-sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
 
-## Use cases
-
-It is extremely important to understand **where** this module *can easily fail, as opposite of being a solution* ...
-
-  * this module assumes *every request passes through the same process*, meaning that *cluster*, *serverless*, *load balance*, or "*you name it*", might easily fail if the browser client `EventSource` points at one end of the spectrum, but any of the further *UUIDs related* request are known in a possibly different stack, not the one that enabled the first request
-
-  * **serverless** solutions **are not** a **good** scenario *so far* for this solution ... serverless is **not** a good solution for anything that uses *websockets*, "forever pending *sse requests*", and so on ....
-
-  * this module was mostly born to satisfy [proxied-node](https://github.com/WebReflection/proxied-node#readme) constrains and architecrture, among IoT caveats, so please **don't use this in production unless you are really understaning what you are doing 👍**
-
 
 ### About
 
@@ -79,6 +69,7 @@ bidi.on('connection', client => {
   });
 });
 ```
+
 
 
 ## API
@@ -152,6 +143,37 @@ bidi.on('close', () => { console.log('all gone'); });
 bidi.close();
 ```
 
-#### About JSON
 
-Please note that the **JSON** library must be the same for both *client* and *server*. [flatted](https://www.npmjs.com/package/flatted) or [@ungap/structured-clone/json](https://github.com/ungap/structured-clone#tojson) are just two possible parsers able to deal with recursion and, in the structured clone case, more data kinds than JSON.
+
+## Use cases
+
+It is very important to understand *where* this module can easily *fail*, as opposite of being a solution ...
+
+  * this module assumes *every request passes through the same stack*, meaning that *cluster*, *serverless*, *load balance*, or any stack that might diverge the request somewhere else, will easily fail if the browser client `EventSource` points at a different end of the spectrum, and further *UUIDs related* request are sent elsewhere
+
+  * this module was mostly born to satisfy [proxied-node](https://github.com/WebReflection/proxied-node#readme) constrains and architecrture, among IoT caveats, so *don't use this in production unless you really [understand how this module works](https://github.com/WebReflection/bidi-sse#how-it-works) 👍*
+
+
+### How it works
+
+  * an *EventSource* client request is intercepted and handled on the server:
+    * the response object is trapped until the client disconnects
+    * a server side *client* is created and the long living response object is associated with it
+    * the very first server-sent event is a unique identifier
+    * the server side *client* is associated to this unique identifier and a *connected* event emitted, passing such *client* as ready to communicate
+  * the client stores internally such unique identifier and emit it's *open* listener, enabling its communication ability
+  * each time the client instance `.send(data)` is invoked, the same *EventSource's href* plus the unique identifier is used to *POST* the data as serialized format
+  * the server intercepts *POST* requests and handle these internally if:
+    * the url is *the same as the initial one defined to trap responses*
+    * there is *a known UUID* associated with the url as `bidi-sse` query string
+  * the sent data is built as string via all its chunks, and then deserialized through the same `stringify` and `parse` mechanism used on the client. This is *JSON* by default, but [it could be any different library](https://github.com/WebReflection/bidi-sse#using-different-serialization)
+    * if the `parse(postedData)` operation fails, an *error* is triggered on the client side, but only if it's still connected
+    * if the operation is successful, a *message* event with the parsed data is invoked on the server "*client's counterpart*"
+  * when the server side *client* `.send(data)` is invoked, a *message* event is emitted in the browser's *client* side, and through the same `stringify` and `parse` procedure
+
+
+#### Using different serialization
+
+Please note that the **JSON** reference library to *stringify* and *parse* must be the same for both *client* and *server*.
+
+[flatted](https://www.npmjs.com/package/flatted) and [@ungap/structured-clone/json](https://github.com/ungap/structured-clone#tojson) are just two of the many possible parser alternatives, able to deal with recursion and, in the structured clone case, with also more data types and primitives.
