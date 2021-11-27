@@ -1,5 +1,7 @@
 # bidi-sse
 
+![two ways](./test/bidi-sse.jpg)
+
 <sup>**Social Media Photo by [Ian Taylor](https://unsplash.com/@carrier_lost) on [Unsplash](https://unsplash.com/)**</sup>
 
 Bidirectional [Server-sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
