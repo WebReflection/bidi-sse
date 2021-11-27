@@ -1,15 +1,15 @@
 'use strict';
 /*! (c) Andrea Giammarchi - ISC */
 
-const listeners = new WeakMap;
+const _ = new WeakMap;
 
 module.exports = class SimpleEmitter {
   constructor() {
-    listeners.set(this, new Map);
+    _.set(this, new Map);
   }
 
   on(type, listener) {
-    const map = listeners.get(this);
+    const map = _.get(this);
     if (!map.has(type))
       map.set(type, new Set);
     map.get(type).add(listener);
@@ -18,15 +18,15 @@ module.exports = class SimpleEmitter {
 
   // lame version (meh about removing)
   once(type, listener) {
-    return this.on(type, function _() {
-      listeners.get(this).get(type).delete(_);
+    return this.on(type, function $() {
+      _.get(this).get(type).delete($);
       listener.apply(this, arguments);
     });
   }
 
   // no return true/false implemented
   emit(type, ...data) {
-    const map = listeners.get(this);
+    const map = _.get(this);
     if (map.has(type)) {
       for (const listener of map.get(type))
         listener.apply(this, data);
@@ -48,7 +48,7 @@ module.exports = class SimpleEmitter {
   }
 
   removeListener(type, listener) {
-    const map = listeners.get(this);
+    const map = _.get(this);
     if (map.has(type)) {
       const set = map.get(type);
       set.delete(listener);

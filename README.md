@@ -17,7 +17,9 @@ Thanks to its different approach, both client side and server side code are mini
 Following a very simple setup to explain the basics behind this module, one for the *client side*, and one for the *server side*.
 
 
-#### On the client
+<details open>
+  <summary><strong>Client</strong></summary>
+  <div>
 
 ```js
 import BidiSSE from 'bidi-sse/client';
@@ -36,8 +38,12 @@ bidi.on('message', console.log);
 bidi.on('error', console.error);
 bidi.on('close', () => console.log('closed'));
 ```
+  </div>
+</details>
 
-#### On the server
+<details open>
+  <summary><strong>Server</strong></summary>
+  <div>
 
 ```js
 const express = require('express');
@@ -69,6 +75,8 @@ bidi.on('connection', client => {
   });
 });
 ```
+  </div>
+</details>
 
 
 
@@ -76,7 +84,10 @@ bidi.on('connection', client => {
 
 Both *client* and *server* constructors accept a `path` to enable as *bidi-sse*, and an optional `options` object.
 
-#### Client
+<details>
+  <summary><strong>Client</strong> - a simplified emitter</summary>
+  <div>
+
 ```js
 const bidi = new BidiSSE('/some-path', {
   // optional fetch options to merge per each send
@@ -108,8 +119,13 @@ bidi.close();
 // extra
 bidi.emit('type', ...[{any: 'data'}]);
 ```
+  </div>
+</details>
 
-#### Server
+<details>
+  <summary><strong>Server</strong> - an event emitter with <em>clients</em> notified via <code>connection</code></summary>
+  <div>
+
 ```js
 const bidi = new BidiSSE('/some-path', {
   // if its value is `"cors"` it enables CORS via headers
@@ -142,7 +158,8 @@ bidi.on('close', () => { console.log('all gone'); });
 // methods: close throw away all connected clients, then resolves
 bidi.close();
 ```
-
+  </div>
+</details>
 
 
 ## Use cases
@@ -160,7 +177,7 @@ It is very important to understand *where* this module can easily *fail*, as opp
     * the response object is trapped until the client disconnects
     * a server side *client* is created and the long living response object is associated with it
     * the very first server-sent event is a unique identifier
-    * the server side *client* is associated to this unique identifier and a *connected* event emitted, passing such *client* as ready to communicate
+    * the server side *client* is associated to this unique identifier and a *connection* event emitted, passing such *client* as ready to communicate
   * the client stores internally such unique identifier and emit it's *open* listener, enabling its communication ability
   * each time the client instance `.send(data)` is invoked, the same *EventSource's href* plus the unique identifier is used to *POST* the data as serialized format
   * the server intercepts *POST* requests and handle these internally if:

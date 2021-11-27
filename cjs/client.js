@@ -4,8 +4,8 @@
 const SimpleEmitter = (m => /* c8 ignore start */ m.__esModule ? m.default : m /* c8 ignore stop */)(require('./simple-emitter.js'));
 const {Class, CONNECTING, OPEN, CLOSING, CLOSED} = require('./constants.js');
 
-const privates = new WeakMap;
 const fetchText = body => body.text();
+const _ = new WeakMap;
 
 /**
  * @typedef {Object} ClientOptions - additional options for SSE
@@ -26,51 +26,55 @@ module.exports = class extends Class(SimpleEmitter) {
     const withCredentials = fetch.credentials !== 'omit';
     const es = new EventSource(url, {withCredentials});
     const {parse, stringify} = options.JSON || JSON;
-    const _ = {es, stringify, href: '', options: fetch, state: CONNECTING};
+    const $ = {es, stringify, href: '', options: fetch, state: CONNECTING};
 
+    // regular flow
     es.addEventListener('bidi-sse', ({data}) => {
       const id = parse(data);
       const location = new URL(es.url);
       location.searchParams.append('bidi-sse', id);
-      _.href = location.href;
-      _.state = OPEN;
+      $.href = location.href;
+      $.state = OPEN;
       this.emit('open');
     }, once);
 
-    es.addEventListener('unexpected', ({data}) => {
-      this.emit('error', new Error('Unexpected ➡ ' + parse(data)));
-    });
-
-    es.addEventListener('message', ({data}) => {
-      this.emit('message', parse(data));
-    });
-
-    es.addEventListener('error', () => {
-      _.state = CLOSING;
-      this.emit('error', new Error('Connection lost ➡ ' + url));
-      this.close();
-    }, once);
+    es.addEventListener(
+      'message',
+      ({data}) => this.emit('message', parse(data))
+    );
 
     es.addEventListener('close', () => {
-      _.state = CLOSED;
+      $.state = CLOSED;
       es.close();
       this.emit('close');
     }, once);
 
-    privates.set(this, _);
+    // error handling
+    es.addEventListener(
+      'unexpected',
+      ({data}) => this.emit('error', new Error('Unexpected ➡ ' + parse(data)))
+    );
+
+    es.addEventListener('error', () => {
+      $.state = CLOSING;
+      this.emit('error', new Error('Connection lost ➡ ' + es.url));
+      this.close();
+    }, once);
+
+    _.set(this, $);
   }
 
   /**
    * @type {CONNECTING | OPEN | CLOSING | CLOSED}
    */
-  get readyState() { return privates.get(this).state; }
+  get readyState() { return _.get(this).state; }
 
   /**
    * Send data to the server side bidi-sse enabled end point.
    * @param {any} data serializable data to send
    */
   send(data) {
-    const {stringify, href, options, state} = privates.get(this);
+    const {stringify, href, options, state} = _.get(this);
     if (state !== OPEN)
       throw new Error('invalid state');
 
@@ -82,6 +86,6 @@ module.exports = class extends Class(SimpleEmitter) {
    * Disconnect the `EventSource` and emit `close` event.
    */
   close() {
-    privates.get(this).es.dispatchEvent(new Event('close'));
+    _.get(this).es.dispatchEvent(new Event('close'));
   }
 }
