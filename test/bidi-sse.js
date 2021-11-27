@@ -15,16 +15,26 @@ class SimpleEmitter {
     return this;
   }
 
+  // lame version (meh about removing)
+  once(type, listener) {
+    return this.on(type, function _() {
+      listeners.get(this).get(type).delete(_);
+      listener.apply(this, arguments);
+    });
+  }
+
+  // no return true/false implemented
   emit(type, ...data) {
     const map = listeners.get(this);
     if (map.has(type)) {
       for (const listener of map.get(type))
         listener.apply(this, data);
     }
-    // unnecessary return true or false logic
   }
 
-  /* unnecessary extras ?
+  /* unnecessary extras ...
+
+  // non lame version, requies another wm:
   const once = new WeakMap;
   once(type, listener) {
     if (!once.has(listener)) {
@@ -46,6 +56,7 @@ class SimpleEmitter {
     }
     return this;
   }
+
   //*/
 }
 

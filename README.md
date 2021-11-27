@@ -96,10 +96,10 @@ bidi.readyState;
 // BidiSSE.CLOSED     ➡ bidi.close(); or after connection error
 
 // events + chainable .on(type, fn) method
-bidi.on('open', () => console.info('open'));
+bidi.once('open', () => console.info('open'));
 bidi.on('message', console.log);
 bidi.on('error', console.error);
-bidi.on('close', () => console.info('close'));
+bidi.once('close', () => console.info('close'));
 
 // methods: send throws if readyState is not OPEN
 bidi.send({any: 'data'});
