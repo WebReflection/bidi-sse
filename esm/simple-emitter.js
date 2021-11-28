@@ -15,14 +15,6 @@ export default class SimpleEmitter {
     return this;
   }
 
-  // lame version (meh about removing)
-  once(type, listener) {
-    return this.on(type, function $() {
-      _.get(this).get(type).delete($);
-      listener.apply(this, arguments);
-    });
-  }
-
   // no return true/false implemented
   emit(type, ...data) {
     const map = _.get(this);
@@ -30,6 +22,20 @@ export default class SimpleEmitter {
       for (const listener of map.get(type))
         listener.apply(this, data);
     }
+  }
+
+  // lame versions (no removal of `once` possible)
+  once(type, listener) {
+    return this.on(type, function $() {
+      listener.apply(this.off(type, $), arguments);
+    });
+  }
+
+  off(type, listener) {
+    const map = _.get(this);
+    if (map.has(type))
+      map.get(type).delete(listener);
+    return this;
   }
 
   /* unnecessary extras ...
