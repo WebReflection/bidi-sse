@@ -46,5 +46,8 @@
     },
     "./package.json": "./package.json"
   },
-  "unpkg": "es.js"
+  "unpkg": "es.js",
+  "dependencies": {
+    "shadowed-map": "^0.1.0"
+  }
 }

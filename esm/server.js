@@ -2,8 +2,8 @@
 
 import {randomUUID} from 'crypto';
 import {EventEmitter} from 'events';
+import {Values} from 'shadowed-map';
 import {Class, OPEN, CLOSED} from './constants.js';
-import SetValues from './set-values.js';
 
 class Client extends Class(EventEmitter) {
   /**
@@ -49,9 +49,9 @@ export default class Server extends EventEmitter {
     const {parse, stringify} = options.JSON || JSON;
     const headers = options.headers || {};
     if (options.mode === 'cors')
-      headers['access-control-allow-origin'] = '*';
+      headers['Access-Control-Allow-Origin'] = '*';
 
-    super()._ = new SetValues(clients);
+    super()._ = new Values(clients);
 
     /**
      * Handles both *express* and regular *http* server as callback.
@@ -118,9 +118,9 @@ export default class Server extends EventEmitter {
             )
             .writeHead(200, {
               ...headers,
-              'connection': 'keep-alive',
-              'cache-control': 'no-cache',
-              'content-type': 'text/event-stream'
+              'Connection': 'keep-alive',
+              'Cache-Control': 'no-cache',
+              'Content-Type': 'text/event-stream'
             })
             .write(`event: bidi-sse\ndata: ${stringify(uid)}\n\n`)
           ;
